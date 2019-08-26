@@ -11,6 +11,8 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.routing.Road;
+import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -25,6 +27,9 @@ import java.util.List;
 
 public class Map extends AppCompatActivity implements MapEventsReceiver {
     MapView map = null;
+    GeoPoint start;
+    GeoPoint end;
+
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,8 +56,8 @@ public class Map extends AppCompatActivity implements MapEventsReceiver {
         final double x2 = extras.getDouble("x2");
         final double y2 = extras.getDouble("y2");
 
-        GeoPoint start = new GeoPoint(y1, x1);
-        GeoPoint end = new GeoPoint(y2, x2);
+        start = new GeoPoint(y1, x1);
+        end = new GeoPoint(y2, x2);
 
         MapEventsOverlay mapEventsOverlay = new MapEventsOverlay(this);
         /*
@@ -90,7 +95,7 @@ public class Map extends AppCompatActivity implements MapEventsReceiver {
         map.getOverlays().add(endMarker);
 
         //Create line between the markers
-        List<GeoPoint> geoPoints = new ArrayList<>();
+       /* List<GeoPoint> geoPoints = new ArrayList<>();
         geoPoints.add(start);
         geoPoints.add(end);
         Polyline line = new Polyline();
@@ -98,6 +103,18 @@ public class Map extends AppCompatActivity implements MapEventsReceiver {
         map.getOverlayManager().add(line);
         map.invalidate();
         map.getOverlays().add( mapEventsOverlay);
+
+        */
+
+        RoadManager roadManager = new customRoadManager(this);
+        ArrayList<GeoPoint> waypoints = new ArrayList<>();
+        waypoints.add(start);
+        waypoints.add (end);
+        Road weg = roadManager.getRoad(waypoints);
+        Polyline roadOverlay = roadManager.buildRoadOverlay(weg);
+        map.getOverlays().add(roadOverlay);
+        map.invalidate();
+
     }
 
     public void onResume(){

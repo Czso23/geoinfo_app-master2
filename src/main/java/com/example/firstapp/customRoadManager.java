@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import org.osmdroid.bonuspack.routing.OSRMRoadManager;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
+import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.bonuspack.utils.BonusPackHelper;
 import org.osmdroid.util.GeoPoint;
 
@@ -16,14 +17,16 @@ import java.util.ArrayList;
 
 public class customRoadManager extends RoadManager {
 
+    private static final String SERVICE = "https://api.openrouteservice.org/v2/directions/driving-car";
+    private Context mContext;
+
     public customRoadManager(Context context){
-        super(context);
-       // mContext = context;
-        mServiceUrl = SERVICE;
-        mUserAgent = BonusPackHelper.DEFAULT_USER_AGENT;
+        super();
+        mContext = context;
+       // mServiceUrl = SERVICE;
+       // mUserAgent = BonusPackHelper.DEFAULT_USER_AGENT;
     }
 
-    private static final String SERVICE = "https://api.openrouteservice.org/v2/directions/driving-car";
 
 
     private String getApiString (ArrayList<GeoPoint> waypoints) {
@@ -35,6 +38,7 @@ public class customRoadManager extends RoadManager {
         string.append("&end=");
         GeoPoint end = waypoints.get(1);
         string.append(end);
+
 
         return string.toString();
     }
@@ -54,6 +58,12 @@ public class customRoadManager extends RoadManager {
             JSONObject jNull = jFeatures.getJSONObject(0);
             JSONObject jGeometrie = jNull.getJSONObject("geometry");
             JSONArray jKoordinaten = jGeometrie.getJSONArray("coordinates");
+            JSONObject jProb =jNull.getJSONObject("properties");
+            JSONArray jArr = jProb.getJSONArray("segments");
+            JSONObject jSeg = jArr.getJSONObject(0);
+            road.mLength = jSeg.getDouble("distance")/1000;
+            road.mDuration = jSeg.getDouble("duration");
+            JSONArray jStep = jSeg.getJSONArray("steps");
             int jLength = jKoordinaten.length();
             road.mRouteHigh = new ArrayList<>(jLength);
 
@@ -63,6 +73,16 @@ public class customRoadManager extends RoadManager {
                 double lat = punkte.getDouble(0);
                 GeoPoint p = new GeoPoint(lon,lat);
                 road.mRouteHigh.add(p);
+            }
+
+            for (int o = 0; o < jStep.length(); o++){
+                RoadNode knoten = new RoadNode();
+                JSONObject schritt = jStep.getJSONObject(o);
+                JSONArray knotenpunkt = schritt.getJSONArray("way_points");
+                knoten.mLength = schritt.getDouble("distance")/1000;
+                knoten.mDuration = schritt.getDouble("duration");
+                road.mNodes.add(knoten);
+
             }
 
         } catch (JSONException e) {
@@ -75,6 +95,9 @@ public class customRoadManager extends RoadManager {
 
     @Override
     public Road[] getRoads(ArrayList<GeoPoint> waypoints) {
-        return new Road[0];
+        Road road = getRoad(waypoints);
+        Road []roads = new Road[1];
+        roads [0]= road;
+        return roads;
     }
 }
