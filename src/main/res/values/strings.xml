@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Distanzrechner</string>
+    <string name="distanzrechner">Distanzrechner</string>
+    <string name="ergebnis">Ergebnis</string>
+</resources>
